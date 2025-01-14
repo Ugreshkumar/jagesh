@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        img {
+            max-width: 100%;
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Compressor</h1>
+        <input type="file" id="imageInput" accept="image/*">
+        <div>
+            <label for="quality">Compression Quality: <span id="qualityValue">80</span>%</label>
+            <input type="range" id="quality" class="slider" min="10" max="100" value="80">
+        </div>
+        <div>
+            <label for="scale">Scale Image (%): <span id="scaleValue">100</span>%</label>
+            <input type="range" id="scale" class="slider" min="10" max="100" value="100">
+        </div>
+        <img id="preview" src="" alt="Preview will appear here">
+        <button id="downloadButton" style="display:none;">Download Compressed Image</button>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const scaleSlider = document.getElementById('scale');
+        const scaleValue = document.getElementById('scaleValue');
+        const preview = document.getElementById('preview');
+        const downloadButton = document.getElementById('downloadButton');
+
+        let originalImage = null;
+        let canvas = document.createElement('canvas');
+
+        qualitySlider.addEventListener('input', () => {
+            qualityValue.textContent = qualitySlider.value;
+        });
+
+        scaleSlider.addEventListener('input', () => {
+            scaleValue.textContent = scaleSlider.value;
+        });
+
+        imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalImage = new Image();
+                    originalImage.src = e.target.result;
+                    originalImage.onload = () => {
+                        preview.src = originalImage.src;
+                        processImage();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        const processImage = () => {
+            if (!originalImage) return;
+
+            const quality = qualitySlider.value / 100;
+            const scale = scaleSlider.value / 100;
+            const ctx = canvas.getContext('2d');
+
+            const newWidth = originalImage.width * scale;
+            const newHeight = originalImage.height * scale;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+
+            canvas.toBlob((blob) => {
+                const compressedUrl = URL.createObjectURL(blob);
+                preview.src = compressedUrl;
+
+                downloadButton.style.display = 'inline-block';
+                downloadButton.onclick = () => downloadImage(blob);
+            }, 'image/jpeg', quality);
+        };
+
+        const downloadImage = (blob) => {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'compressed_image.jpg';
+            link.click();
+        };
+
+        qualitySlider.addEventListener('change', processImage);
+        scaleSlider.addEventListener('change', processImage);
+    </script>
+</body>
+</html>
